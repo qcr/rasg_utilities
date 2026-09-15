@@ -17,7 +17,7 @@
 
 # Author:  Alec Tutin
 # Date:	   2025-09-19
-# Version: 1.0
+# Version: 1.1
 #
 # Apply a license to code files according to standard practice.
 
@@ -55,6 +55,9 @@ def apply_header(file: Path, license_text: str, copyright_text: str) -> None:
     with file.open('r') as f:
         contents: List[str] = f.readlines()
 
+    if len(contents) == 0:
+        return
+    
     # Leave the shebang at the top
     insert_index: int = 1 if contents[0].startswith('#!') else 0
 
@@ -112,6 +115,7 @@ def main() -> None:
     parser.add_argument('-l', '--license', metavar='license', required=True, help='Path to the license file to insert into the code file headers')
     parser.add_argument('-e', '--extension', metavar='extension', action="extend", nargs="+", help=f'Limit file search to specified extensions [{", ".join(processor_map.keys())}]')
     parser.add_argument('-c', '--copyright', metavar='copyright', required=True, help='Name of the copyright holder')
+    parser.add_argument('--ignore-init', action='store_true')
     parser.add_argument('project', metavar='project', help='/path/to/project/directory/')
 
     args = parser.parse_args()
@@ -120,6 +124,7 @@ def main() -> None:
     license_text: str = license_path.read_text()
     extensions: List[str] = args.extension
     copyright_text: str = get_copyright_declaration(args.copyright)
+    ignore_init: bool = args.ignore_init
 
     project_path = Path(args.project).expanduser()
 
@@ -148,7 +153,7 @@ def main() -> None:
 
                 continue
 
-            if file.stem in ignored_names:
+            if ignore_init and file.stem in ignored_names:
                 continue
 
             answer: str = input(f'Process "{str(file)}"? (y/N) ').lower()
